@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Hope Lutheran Church - Test Stream Viewer</title>
+  <style>
+    :root {
+      --page-bg: #111;
+      --panel-bg: #181818;
+      --text: #f2f2f2;
+      --muted: #b8b8b8;
+      --link: #9ecbff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(1200px, 100%);
+      background: var(--panel-bg);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(1.25rem, 2.5vw, 2rem);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .video-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .video-frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .fallback {
+      margin: 14px 0 0;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+
+    .fallback a {
+      color: var(--link);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>New Hope Lutheran Church Test Stream Viewer</h1>
+
+    <div class="video-frame">
+      <!--
+        Replace TEST_VIDEO_ID_HERE with the YouTube video ID from your test channel.
+
+        Example:
+        If the YouTube watch link is:
+        https://www.youtube.com/watch?v=abc123XYZ
+
+        Then the video ID is:
+        abc123XYZ
+
+        For a scheduled or active live stream, use the video ID from that scheduled/active stream.
+      -->
+      <iframe
+        src="https://www.youtube.com/embed/TEST_VIDEO_ID_HERE?autoplay=1&mute=1&playsinline=1&controls=1&rel=0"
+        title="New Hope Lutheran Church Test Stream"
+        allow="autoplay; encrypted-media; picture-in-picture; web-share"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <p class="fallback">
+      If the video does not start, use the fallback link:
+      <a href="https://www.youtube.com/watch?v=TEST_VIDEO_ID_HERE" target="_blank" rel="noopener">
+        open this stream on YouTube
+      </a>.
+    </p>
+  </main>
+</body>
+</html>
