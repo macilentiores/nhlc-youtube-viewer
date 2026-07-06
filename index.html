@@ -1,12 +1,10 @@
-from pathlib import Path
-import zipfile
-
-updated_html = """<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>New Hope Lutheran Church - Sunday Service Viewer</title>
+  <meta name="description" content="New Hope Lutheran Church - Live Stream Viewer">
+  <title>New Hope Lutheran Church - Live Stream</title>
   <style>
     :root {
       --page-bg: #111;
@@ -17,9 +15,7 @@ updated_html = """<!doctype html>
       --accent: #4a9eff;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -65,7 +61,46 @@ updated_html = """<!doctype html>
       border: 0;
     }
 
-    /* Buttons below the video frame, left aligned */
+    .mute-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .mute-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+
+    .fs-toggle-btn {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .fs-toggle-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+
     .viewer-actions {
       margin-top: 12px;
       display: flex;
@@ -83,268 +118,202 @@ updated_html = """<!doctype html>
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+      transition: all 0.2s ease;
     }
 
-    .viewer-actions button:hover,
-    .viewer-actions button:focus {
+    .viewer-actions button:hover {
       background: #3a3a3a;
-      border-color: var(--accent);
-      outline: none;
-    }
-
-    .viewer-actions button:active {
-      transform: scale(0.97);
-    }
-
-    /* Persistent Mute/Unmute button - top right corner of video */
-    .mute-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 20;
-      background: rgba(0, 0, 0, 0.75);
-      color: #fff;
-      border: 2px solid #fff;
-      border-radius: 6px;
-      padding: 8px 14px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s ease, transform 0.1s ease;
-    }
-
-    .mute-btn:hover,
-    .mute-btn:focus {
-      background: rgba(0, 0, 0, 0.9);
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .mute-btn:active {
-      transform: scale(0.96);
-    }
-
-    /* Large sound enable overlay - appears after 5 seconds if muted */
-    .sound-overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 30;
-      background: rgba(0, 0, 0, 0.65);
-      display: none; /* hidden by default */
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    .sound-overlay.show {
-      display: flex;
-    }
-
-    .sound-overlay .big-text {
-      font-size: clamp(1.6rem, 5vw, 2.4rem);
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    }
-
-    .sound-overlay .sub-text {
-      font-size: clamp(1rem, 3vw, 1.25rem);
-      color: #ddd;
-      max-width: 460px;
+      border-color: #777;
     }
 
     .fallback {
       margin: 16px 0 0;
       color: var(--muted);
       text-align: center;
-      line-height: 1.5;
       font-size: 1rem;
     }
 
-    .fallback a {
-      color: var(--link);
-      font-weight: 600;
+    .fallback a { color: var(--link); font-weight: 600; }
+
+    .error-message {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: #1a1a1a;
+      color: #ff6b6b;
+      text-align: center;
+      padding: 20px;
+      z-index: 30;
+    }
+
+    .error-message.show {
+      display: flex;
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>New Hope Lutheran Church<br>Sunday Morning Service</h1>
+    <h1>New Hope Lutheran Church<br>Live Stream</h1>
 
-    <!--
-      Production channel: New Hope Lutheran Church Regina
-      Channel ID: UCNg9iyVIF5ks6hO1P-VIqKQ
+    <!-- 
+      ============================================================
+      PRODUCTION VERSION - Optimized for Cloudflare Pages
+      ============================================================
 
-      This channel-live embed avoids changing the page for every scheduled stream.
-      It depends on YouTube's live channel behavior and should be tested before each major use.
+      WEEKLY UPDATE INSTRUCTIONS (Very Simple)
 
-      If this page is moved to a custom domain, update the origin= value below.
+      1. Schedule your Sunday stream in YouTube.
+      2. Open the scheduled stream page.
+      3. Copy the Video ID from the URL (the long code after ?v= ).
+      4. Paste it below between the quotes.
+      5. Save the file and upload to Cloudflare Pages.
+
+      Example: const VIDEO_ID = "abc123XYZ456";
+      ============================================================
     -->
+    <script>
+      // ============================================================
+      // CHANGE THIS EVERY SUNDAY with the new stream Video ID
+      // ============================================================
+      const VIDEO_ID = "vDRZXDoykFk";   // ← Replace with current Sunday stream ID
+    </script>
+
     <div class="video-frame" id="video-frame">
       <iframe
         id="yt-player"
-        src="https://www.youtube.com/embed/live_stream?channel=UCNg9iyVIF5ks6hO1P-VIqKQ&amp;autoplay=1&amp;mute=1&amp;playsinline=1&amp;controls=1&amp;rel=0&amp;enablejsapi=1&amp;origin=https%3A%2F%2Fnhlc-youtube-viewer.pages.dev"
-        title="New Hope Lutheran Church Sunday Service"
+        src=""
+        title="New Hope Lutheran Church Live Stream"
         allow="autoplay; encrypted-media; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen>
       </iframe>
 
-      <!-- Persistent Mute/Unmute button -->
-      <button id="mute-btn" class="mute-btn" type="button" aria-label="Toggle sound">
+      <!-- Mute / Unmute Button -->
+      <button id="mute-btn" class="mute-btn" type="button">
         🔇 <span id="mute-text">Unmute</span>
       </button>
 
-      <!-- Sound enable overlay (shows after 5 seconds if still muted) -->
-      <div id="sound-overlay" class="sound-overlay">
-        <div class="big-text">Tap or click to turn on sound</div>
-        <div class="sub-text">Sound is muted.<br>Tap or click here to turn on sound when the service begins.</div>
+      <!-- Fullscreen Toggle Button -->
+      <button id="fs-toggle-btn" class="fs-toggle-btn" type="button">
+        ⛶ Full Screen
+      </button>
+
+      <!-- Error message overlay (shown if player fails) -->
+      <div id="error-message" class="error-message">
+        <p>⚠️ Unable to load the live stream.</p>
+        <p>Please try the button below to watch directly on YouTube.</p>
       </div>
     </div>
 
-    <!-- Buttons outside and below the video frame -->
     <div class="viewer-actions">
-      <button id="fullscreen-btn" type="button">Go Full Screen</button>
       <button id="youtube-details-btn" type="button">Description &amp; Comments</button>
     </div>
 
     <p class="fallback">
-      Having trouble?
+      Having trouble viewing the stream?
       <a href="https://www.youtube.com/@NewHopeLutheranChurchRegina/live" target="_blank" rel="noopener">
-        Open the live stream directly on YouTube
+        Open directly on YouTube
       </a>
     </p>
   </main>
 
   <script>
-    // YouTube IFrame API
     let player;
-    let overlayTimer = null;
-
-    const fallbackYouTubeUrl = "https://www.youtube.com/@NewHopeLutheranChurchRegina/live";
 
     function onYouTubeIframeAPIReady() {
+      const iframe = document.getElementById('yt-player');
+      
+      // Set the embed source with recommended parameters
+      iframe.src = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&enablejsapi=1&modestbranding=1`;
+
       player = new YT.Player('yt-player', {
         events: {
           'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
+          'onError': onPlayerError
         }
       });
     }
 
-    function onPlayerReady(event) {
-      // Player is ready. Start a 5-second timer.
-      // If still muted after 5 seconds, show the big overlay.
-      overlayTimer = setTimeout(() => {
-        if (player && player.isMuted && player.isMuted()) {
-          document.getElementById('sound-overlay').classList.add('show');
-        }
-      }, 5000);
-
+    function onPlayerReady() {
       updateMuteButton();
+      updateFullscreenButton();
+      // Hide any previous error message
+      document.getElementById('error-message').classList.remove('show');
     }
 
-    function onPlayerStateChange(event) {
-      // Reserved for future live-state handling if needed.
+    function onPlayerError(event) {
+      console.error('YouTube Player Error:', event.data);
+      // Show user-friendly error message
+      document.getElementById('error-message').classList.add('show');
     }
 
     function updateMuteButton() {
       const btn = document.getElementById('mute-btn');
       const text = document.getElementById('mute-text');
+      if (!player || typeof player.isMuted !== 'function') return;
 
-      if (!player || !player.isMuted) return;
-
-      if (player.isMuted()) {
-        text.textContent = 'Unmute';
-        btn.setAttribute('aria-label', 'Unmute sound');
-      } else {
-        text.textContent = 'Mute';
-        btn.setAttribute('aria-label', 'Mute sound');
-      }
+      text.textContent = player.isMuted() ? 'Unmute' : 'Mute';
     }
 
     function toggleMute() {
-      if (!player || !player.isMuted) return;
-
-      const overlay = document.getElementById('sound-overlay');
-
-      if (player.isMuted()) {
-        player.unMute();
-        overlay.classList.remove('show');
-      } else {
-        player.mute();
-      }
-
-      setTimeout(updateMuteButton, 100);
+      if (!player || typeof player.isMuted !== 'function') return;
+      player.isMuted() ? player.unMute() : player.mute();
+      setTimeout(updateMuteButton, 80);
     }
 
-    function setupOverlayClick() {
-      const overlay = document.getElementById('sound-overlay');
-      overlay.addEventListener('click', () => {
-        if (player && player.unMute) {
-          player.unMute();
-          overlay.classList.remove('show');
-          setTimeout(updateMuteButton, 100);
-        }
-      });
-    }
-
-    function goFullScreen() {
+    function toggleFullscreen() {
       const frame = document.getElementById('video-frame');
+      const isFS = document.fullscreenElement || 
+                   document.webkitFullscreenElement || 
+                   document.msFullscreenElement;
 
-      if (frame.requestFullscreen) {
-        frame.requestFullscreen();
-      } else if (frame.webkitRequestFullscreen) {
-        frame.webkitRequestFullscreen();
-      } else if (frame.msRequestFullscreen) {
-        frame.msRequestFullscreen();
+      if (!isFS) {
+        if (frame.requestFullscreen) frame.requestFullscreen();
+        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+        else if (frame.msRequestFullscreen) frame.msRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
       }
+    }
+
+    function updateFullscreenButton() {
+      const btn = document.getElementById('fs-toggle-btn');
+      const isFS = document.fullscreenElement || 
+                   document.webkitFullscreenElement || 
+                   document.msFullscreenElement;
+      btn.innerHTML = isFS ? '✕ Exit Full Screen' : '⛶ Full Screen';
     }
 
     function openYouTubeDetails() {
-      /*
-        With the channel-live embed, the clean page may not know the exact scheduled-video ID
-        until YouTube loads the active player.
-
-        When possible, use the player-provided video URL. If unavailable, fall back to
-        the channel live page, which should lead to the active or upcoming live stream.
-      */
-      let url = fallbackYouTubeUrl;
-
+      let url = `https://www.youtube.com/watch?v=${VIDEO_ID}`;
       try {
-        if (player && player.getVideoUrl) {
+        if (player && typeof player.getVideoUrl === 'function') {
           const playerUrl = player.getVideoUrl();
           if (playerUrl && playerUrl !== "https://www.youtube.com/") {
             url = playerUrl;
           }
         }
-      } catch (error) {
-        url = fallbackYouTubeUrl;
-      }
-
-      window.open(url, "_blank", "noopener");
+      } catch(e) {}
+      window.open(url, "_blank");
     }
 
     function setupControls() {
       document.getElementById('mute-btn').addEventListener('click', toggleMute);
-      document.getElementById('fullscreen-btn').addEventListener('click', goFullScreen);
+      document.getElementById('fs-toggle-btn').addEventListener('click', toggleFullscreen);
       document.getElementById('youtube-details-btn').addEventListener('click', openYouTubeDetails);
 
       const frame = document.getElementById('video-frame');
-      frame.addEventListener('dblclick', () => {
-        if (!document.fullscreenElement) {
-          goFullScreen();
-        }
-      });
+      frame.addEventListener('dblclick', toggleFullscreen);
 
-      setupOverlayClick();
+      // Update fullscreen button when exiting via ESC key etc.
+      document.addEventListener('fullscreenchange', updateFullscreenButton);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+      document.addEventListener('msfullscreenchange', updateFullscreenButton);
     }
 
     function loadYouTubeAPI() {
@@ -355,6 +324,15 @@ updated_html = """<!doctype html>
     }
 
     function init() {
+      // Safety check - make sure a real 11-character Video ID is set
+      if (!VIDEO_ID || VIDEO_ID.length !== 11 || VIDEO_ID === "i3kFROZmtvE") {
+        console.warn("%c[Live Stream Viewer] Please replace VIDEO_ID with the current Sunday stream Video ID.", "color: orange; font-weight: bold");
+        document.getElementById('error-message').innerHTML = 
+          '<p>Please update the VIDEO_ID in the code with the current stream.</p>';
+        document.getElementById('error-message').classList.add('show');
+        return;
+      }
+
       loadYouTubeAPI();
       setupControls();
     }
@@ -363,14 +341,3 @@ updated_html = """<!doctype html>
   </script>
 </body>
 </html>
-"""
-
-out_path = Path("/mnt/data/index_nhlc_youtube_viewer_buttons_outside.html")
-out_path.write_text(updated_html, encoding="utf-8")
-
-zip_path = Path("/mnt/data/nhlc_youtube_viewer_buttons_outside.zip")
-with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-    z.write(out_path, arcname="index.html")
-
-print(f"Created {out_path}")
-print(f"Created {zip_path}")
